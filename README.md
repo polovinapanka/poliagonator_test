@@ -7,7 +7,6 @@ RL_Map
 
 В уровне должны находиться:
 
-RL_Floor
 BP_RLAgent
 BP_RLTarget
 BP_RLEnvironment
