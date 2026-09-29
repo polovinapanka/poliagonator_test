@@ -3,7 +3,7 @@ from stable_baselines3 import PPO
 from UE_env import UnrealEnv
 
 
-MODEL_PATH = "ppo_unreal_100000steps"
+MODEL_PATH = "ppo_unreal_200000steps"
 
 NUM_EPISODES = 10
 
@@ -15,6 +15,7 @@ def main():
 
     successes = 0
     truncated = 0
+    failed = 0
 
     total_steps = 0
     total_rewards = 0.0
@@ -76,11 +77,17 @@ def main():
 
         elif episode_truncated:
             truncated += 1
-
-            print(
-                f"TRUNCATED! "
-                f"Лимит {episode_steps} шагов."
-            )
+            if episode_steps < 200:
+                print(
+                    f"TRUNCATED! "
+                    f"Модель врезалась на {episode_steps} шаге."
+                )
+                failed += 1
+            else:
+                print(
+                    f"TRUNCATED! "
+                    f"Лимит {episode_steps} шагов."
+                )
 
         print(
             f"Итог эпизода: "
@@ -102,6 +109,7 @@ def main():
     print(f"Эпизодов:             {NUM_EPISODES}")
     print(f"Успешных:             {successes}")
     print(f"Неуспешных:           {truncated}")
+    print(f"Врезалась:           {failed}")
     print(f"Success rate:         {success_rate:.1f}%")
     print(f"Среднее число шагов:  {average_steps:.1f}")
     print(f"Средняя награда:      {average_reward:.2f}")

@@ -17,10 +17,10 @@ model = PPO(
 
 
 model.learn(
-    total_timesteps=100000
+    total_timesteps=200000
 )
 
 
-model.save("ppo_unreal_100000steps")
+model.save("ppo_unreal_200000steps")
 
 env.close()

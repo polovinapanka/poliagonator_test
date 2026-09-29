@@ -15,7 +15,13 @@ class UnrealEnv(gym.Env):
         super().__init__()
 
         self.ue = UnrealClient()
-
+        self.opposites = {
+            0: 1,
+            1: 0,
+            2: 3,
+            3: 2,
+            4: None
+        }
         # Доступные действия агента:
         #
         # 0 = +Y
@@ -27,19 +33,37 @@ class UnrealEnv(gym.Env):
         self.action_space = spaces.Discrete(4)
 
         self.observation_space = spaces.Box(
-            low=-2000.0,
-            high=2000.0,
-            shape=(4,),
+            low=np.array([
+                -2000,
+                -2000,
+                0,
+                0,
+                0,
+                0
+            ], dtype=np.float32),
+
+            high=np.array([
+                2000,
+                2000,
+                300,
+                300,
+                300,
+                300
+            ], dtype=np.float32),
+
             dtype=np.float32
         )
 
     def _make_observation(self, response):
         return np.array(
             [
-                response["agentX"],
-                response["agentY"],
-                response["targetX"],
-                response["targetY"],
+                response["targetX"] - response["agentX"],
+                response["targetY"] - response["agentY"],
+
+                response["lidarFront"],
+                response["lidarBack"],
+                response["lidarRight"],
+                response["lidarLeft"],
             ],
             dtype=np.float32
         )
@@ -50,6 +74,7 @@ class UnrealEnv(gym.Env):
         super().reset(seed=seed)
 
         response = self.ue.step(4)
+        self.last_step = 4
 
         observation = self._make_observation(
             response
@@ -66,9 +91,19 @@ class UnrealEnv(gym.Env):
             response
         )
 
-        reward = float(
-            response["reward"]
-        )
+        lidars = [response['lidarFront'], response['lidarBack'], response['lidarRight'], response['lidarLeft'],]
+
+        lidars_valid = min(lidars)
+
+
+        if response["terminated"]:
+            reward = 100
+        elif lidars_valid >= 100:
+            reward = response["distanceDelta"] / 100.0 - 0.05
+        elif 50 <= lidars_valid < 100:
+            reward = -0.5
+        else:
+            reward = -1
 
         terminated = bool(
             response["terminated"]
@@ -77,6 +112,7 @@ class UnrealEnv(gym.Env):
         truncated = bool(
             response["truncated"]
         )
+
 
         distance = float(
             np.sqrt(
